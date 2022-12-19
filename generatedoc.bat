@@ -1,0 +1,1 @@
+pdoc -o ./docs ./IdFort/IdFort.py
