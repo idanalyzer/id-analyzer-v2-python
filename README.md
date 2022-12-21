@@ -149,7 +149,7 @@ except Exception as e:
 ```
 
 ## Api Document
-[ID Analyzer Document](https://id-analyzer-v2.readme.io/docs/nodejs)
+[ID Analyzer Document](https://id-analyzer-v2.readme.io/docs/python)
 
 ## Demo
 Check out **/demo** folder for more Python demos.
