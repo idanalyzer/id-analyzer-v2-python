@@ -1,7 +1,7 @@
 import validators
 import os
 import base64
-from IdFort.MyException import APIError, InvalidArgumentException
+from idanalyzer.myException import APIError, InvalidArgumentException
 
 
 def ParseInput(str, allowCache=False):

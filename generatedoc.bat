@@ -1,1 +1,1 @@
-pdoc -o ./docs ./IdFort/IdFort.py
+pdoc -o ./docs ./idanalyzer/idanalyzer.py

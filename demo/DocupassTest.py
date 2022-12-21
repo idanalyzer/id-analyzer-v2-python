@@ -1,4 +1,4 @@
-from IdFort import *
+from idanalyzer import *
 import traceback
 
 try:
