@@ -1,13 +1,19 @@
-from idanalyzer import *
+from idanalyzer2 import *
 import traceback
+import json
+
 
 try:
     profile = Profile(Profile.SECURITY_MEDIUM)
-    s = Scanner('OlZBrUWs4F60McKKKpuLKNY01XX7sm6B')
+    s = Scanner('CBoQpSfkRcPvUhstucIPfiGNLPVuwB23')
     s.throwApiException(True)
-    print(s.quickScan('05.jpg', "", True))
+    resp = s.quickScan('05.png', "", True)
+    with open('quickScan.json', 'w') as f:
+        f.write(json.dumps(resp, indent=4))
     s.setProfile(profile)
-    print(s.scan("05.jpg"))
+    resp = s.scan("05.png")
+    with open('scan.json', 'w') as f:
+        f.write(json.dumps(resp, indent=4))
 except APIError as e:
     print(traceback.format_exc())
     print(e.args[0])
@@ -17,3 +23,4 @@ except InvalidArgumentException as e:
 except Exception as e:
     print(traceback.format_exc())
     print(e.args[0])
+

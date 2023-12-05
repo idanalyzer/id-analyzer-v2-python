@@ -3,8 +3,8 @@ import json
 import re
 from urllib.parse import urlparse
 import ipaddress
-from idanalyzer.myException import APIError, InvalidArgumentException
-from idanalyzer.common import ParseInput, GetEndpoint, ApiExceptionHandle
+from .myException import APIError, InvalidArgumentException
+from .common import ParseInput, GetEndpoint, ApiExceptionHandle
 import requests
 import datetime
 
