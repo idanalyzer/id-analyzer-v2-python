@@ -8,7 +8,7 @@ We strongly discourage users to connect to ID Analyzer API endpoint directly fro
 Install through PIP
 
 ```shell
-pip install idanalyzer
+pip install idanalyzer2
 ```
 
 ## Scanner
