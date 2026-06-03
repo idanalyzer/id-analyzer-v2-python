@@ -734,6 +734,29 @@ class Scanner(_ApiParent):
         resp = self.http.post(GetEndpoint('quickscan'), json=payload, timeout=60)
         return ApiExceptionHandle(resp, self.throwError)
 
+    def veryQuickScan(self, documentFront: str = "", documentBack: str = "", cacheImage: bool = False):
+        """
+        Initiate a very quick (fast) identity document OCR scan by providing input images. Faster but
+        less thorough than quickScan, useful for high-throughput OCR-only use cases.
+
+        :param documentFront: Front of Document (file path, base64 content or URL)
+        :param documentBack: Back of Document (file path, base64 content or URL)
+        :param cacheImage: Cache uploaded image(s) for 24 hours and obtain a cache reference for each image, the reference hash can be used to start standard scan transaction without re-uploading the file.
+        :return:
+        """
+        payload = {
+            'saveFile': cacheImage,
+        }
+        if documentFront == "":
+            raise InvalidArgumentException("Primary document image required.")
+        payload['document'] = ParseInput(documentFront)
+
+        if documentBack != "":
+            payload['documentBack'] = ParseInput(documentBack)
+
+        resp = self.http.post(GetEndpoint('veryquickscan'), json=payload, timeout=60)
+        return ApiExceptionHandle(resp, self.throwError)
+
 
 class Transaction(_ApiParent):
     def __init__(self, apiKey=None):
@@ -1029,6 +1052,18 @@ class Docupass(_ApiParent):
         resp = self.http.post(GetEndpoint('docupass'), json=payload, timeout=30)
         return ApiExceptionHandle(resp, self.throwError)
 
+    def getDocupass(self, reference=''):
+        """
+        Retrieve a single Docupass record by reference.
+
+        :param reference: Docupass reference ID
+        :return:
+        """
+        if reference == '':
+            raise InvalidArgumentException("'reference' is required.")
+        resp = self.http.get(GetEndpoint('docupass/{}'.format(reference)), timeout=30)
+        return ApiExceptionHandle(resp, self.throwError)
+
     def deleteDocupass(self, reference=''):
         """
         :param reference:
@@ -1037,4 +1072,185 @@ class Docupass(_ApiParent):
         if reference == '':
             raise InvalidArgumentException("'reference' is required.")
         resp = self.http.delete(GetEndpoint('docupass/{}'.format(reference)), timeout=30)
+        return ApiExceptionHandle(resp, self.throwError)
+
+
+class AML(_ApiParent):
+    """AML / PEP / sanctions screening (POST /aml and POST /amlv3)."""
+
+    def __init__(self, apiKey=None):
+        super().__init__(apiKey)
+
+    def search(self, name: str = "", idNumber: str = "", entity: int = 0, country: str = "",
+               database=None, birthYear: str = ""):
+        """
+        Search the AML database (v1 endpoint).
+
+        :param name: Search AML database with person's name or business name
+        :param idNumber: Search AML database with document number
+        :param entity: 0=Person, 1=Corporation/Legal Entity
+        :param country: Two digit ISO country code to filter by country/nationality
+        :param database: Optional list of databases to search, e.g. ["us_ofac","eu_fsf"]. If omitted all databases are searched.
+        :param birthYear: Filter by year of birth
+        :return:
+        """
+        if name == "" and idNumber == "":
+            raise InvalidArgumentException("Either 'name' or 'idNumber' is required.")
+        payload = {'entity': entity}
+        if name != "":
+            payload['name'] = name
+        if idNumber != "":
+            payload['idNumber'] = idNumber
+        if country != "":
+            payload['country'] = country
+        if birthYear != "":
+            payload['birthYear'] = birthYear
+        if database:
+            payload['database'] = database
+
+        resp = self.http.post(GetEndpoint('aml'), json=payload, timeout=30)
+        return ApiExceptionHandle(resp, self.throwError)
+
+    def searchV3(self, text: str = "", id: str = "", limit: int = 0, page: int = 0):
+        """
+        Search the AML database (v3 endpoint). Provide either a free-text query or one or more entity IDs.
+
+        :param text: Full-text query (name, alias, document/passport/tax/registration number, etc.)
+        :param id: One or more AML entity IDs separated by comma or newline (max 50)
+        :param limit: Number of results to return per page
+        :param page: Result page number
+        :return:
+        """
+        if text == "" and id == "":
+            raise InvalidArgumentException("Either 'text' or 'id' is required.")
+        payload = {}
+        if text != "":
+            payload['text'] = text
+        if id != "":
+            payload['id'] = id
+        if limit > 0:
+            payload['limit'] = limit
+        if page > 0:
+            payload['page'] = page
+
+        resp = self.http.post(GetEndpoint('amlv3'), json=payload, timeout=30)
+        return ApiExceptionHandle(resp, self.throwError)
+
+
+class ProfileAPI(_ApiParent):
+    """Server-side KYC Profile management (CRUD + export) over /profile."""
+
+    def __init__(self, apiKey=None):
+        super().__init__(apiKey)
+
+    @staticmethod
+    def _profileBody(name, profile):
+        body = {}
+        if name != "":
+            body['name'] = name
+        if profile is not None:
+            if isinstance(profile, Profile):
+                body.update(profile.profileOverride)
+            elif isinstance(profile, dict):
+                body.update(profile)
+            else:
+                raise InvalidArgumentException("'profile' should be a Profile object or dict.")
+        return body
+
+    def listProfile(self, order: int = -1, limit: int = 10, offset: int = 0):
+        """List KYC profiles."""
+        if order not in [1, -1]:
+            raise InvalidArgumentException("'order' should be integer of 1 or -1.")
+        payload = {"order": order, "limit": limit, "offset": offset}
+        resp = self.http.get(GetEndpoint('profile'), params=payload, timeout=30)
+        return ApiExceptionHandle(resp, self.throwError)
+
+    def getProfile(self, profileId: str = ""):
+        """Retrieve a single KYC profile."""
+        if profileId == "":
+            raise InvalidArgumentException("'profileId' required.")
+        resp = self.http.get(GetEndpoint('profile/{}'.format(profileId)), timeout=30)
+        return ApiExceptionHandle(resp, self.throwError)
+
+    def createProfile(self, name: str = "", profile=None):
+        """
+        Create a new KYC profile.
+
+        :param name: Profile name
+        :param profile: A Profile object (its overrides become the profile config) or a dict
+        :return:
+        """
+        if name == "":
+            raise InvalidArgumentException("Profile name required.")
+        resp = self.http.post(GetEndpoint('profile'), json=self._profileBody(name, profile), timeout=30)
+        return ApiExceptionHandle(resp, self.throwError)
+
+    def updateProfile(self, profileId: str = "", name: str = "", profile=None):
+        """Update an existing KYC profile."""
+        if profileId == "":
+            raise InvalidArgumentException("'profileId' required.")
+        resp = self.http.put(GetEndpoint('profile/{}'.format(profileId)),
+                             json=self._profileBody(name, profile), timeout=30)
+        return ApiExceptionHandle(resp, self.throwError)
+
+    def deleteProfile(self, profileId: str = ""):
+        """Delete a KYC profile."""
+        if profileId == "":
+            raise InvalidArgumentException("'profileId' required.")
+        resp = self.http.delete(GetEndpoint('profile/{}'.format(profileId)), timeout=30)
+        return ApiExceptionHandle(resp, self.throwError)
+
+    def exportProfile(self, profileId: str = ""):
+        """Export a KYC profile (GET /export/profile/{id})."""
+        if profileId == "":
+            raise InvalidArgumentException("'profileId' required.")
+        resp = self.http.get(GetEndpoint('export/profile/{}'.format(profileId)), timeout=60)
+        return ApiExceptionHandle(resp, self.throwError)
+
+
+class Webhook(_ApiParent):
+    """Webhook management (list / resend / delete) over /webhook."""
+
+    def __init__(self, apiKey=None):
+        super().__init__(apiKey)
+
+    def listWebhook(self, order: int = -1, limit: int = 10, offset: int = 0, event: str = "",
+                    success: int = -1, createdAtMin: str = "", createdAtMax: str = ""):
+        """List webhook delivery logs."""
+        payload = {"order": order, "limit": limit, "offset": offset}
+        if event != "":
+            payload['event'] = event
+        if success in (0, 1):
+            payload['success'] = success
+        if createdAtMin != "":
+            payload['createdAtMin'] = createdAtMin
+        if createdAtMax != "":
+            payload['createdAtMax'] = createdAtMax
+        resp = self.http.get(GetEndpoint('webhook'), params=payload, timeout=30)
+        return ApiExceptionHandle(resp, self.throwError)
+
+    def resendWebhook(self, webhookId: str = ""):
+        """Resend a webhook delivery."""
+        if webhookId == "":
+            raise InvalidArgumentException("'webhookId' required.")
+        resp = self.http.post(GetEndpoint('webhook/{}'.format(webhookId)), timeout=30)
+        return ApiExceptionHandle(resp, self.throwError)
+
+    def deleteWebhook(self, webhookId: str = ""):
+        """Delete a webhook delivery log."""
+        if webhookId == "":
+            raise InvalidArgumentException("'webhookId' required.")
+        resp = self.http.delete(GetEndpoint('webhook/{}'.format(webhookId)), timeout=30)
+        return ApiExceptionHandle(resp, self.throwError)
+
+
+class Account(_ApiParent):
+    """Account information (GET /myaccount)."""
+
+    def __init__(self, apiKey=None):
+        super().__init__(apiKey)
+
+    def getAccount(self):
+        """Retrieve current account profile, quota and usage."""
+        resp = self.http.get(GetEndpoint('myaccount'), timeout=30)
         return ApiExceptionHandle(resp, self.throwError)

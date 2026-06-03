@@ -22,16 +22,23 @@ def ParseInput(str, allowCache=False):
     raise InvalidArgumentException('Invalid input image, file not found or malformed URL.')
 
 
+_REGION_ENDPOINTS = {
+    'us': 'https://api2.idanalyzer.com',
+    'eu': 'https://api2-eu.idanalyzer.com',
+}
+
+
 def GetEndpoint(uri):
     if uri[:4].lower() == 'http':
         return uri
 
-    region = os.getenv('IDANALYZER_REGION', None)
-    if region is None:
-        return 'https://v2-us1.idanalyzer.com/{}'.format(uri)
+    region = (os.getenv('IDANALYZER_REGION') or 'us').lower()
+    if region not in _REGION_ENDPOINTS:
+        raise InvalidArgumentException(
+            "Invalid IDANALYZER_REGION '{}', valid regions are: {}.".format(
+                region, ', '.join(sorted(_REGION_ENDPOINTS))))
 
-    if region.lower() == 'eu':
-        return 'https://api2-eu.idanalyzer.com/{}'.format(uri)
+    return '{}/{}'.format(_REGION_ENDPOINTS[region], uri)
 
 
 def ApiExceptionHandle(resp, throwError):

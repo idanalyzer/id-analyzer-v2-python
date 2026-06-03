@@ -11,6 +11,30 @@ Install through PIP
 pip install idanalyzer2
 ```
 
+## Base URL / Region
+By default the SDK targets the US fleet (`https://api2.idanalyzer.com`). To use the
+EU fleet (`https://api2-eu.idanalyzer.com`), set the `IDANALYZER_REGION` environment
+variable to `eu` before instantiating any client:
+
+```shell
+export IDANALYZER_REGION=eu   # "us" (default) or "eu"
+```
+
+An unrecognized region value raises `InvalidArgumentException`.
+
+## API Coverage
+The SDK exposes the full ID Analyzer API v2 surface:
+
+- **Scanner** — `scan`, `quickScan`, `veryQuickScan`
+- **Biometric** — `verifyFace`, `verifyLiveness`
+- **AML** — `search` (`/aml`), `searchV3` (`/amlv3`)
+- **Contract** — `generate` + template CRUD
+- **Transaction** — get/list/update/delete, export, `saveImage`/`saveFile`
+- **Docupass** — `createDocupass`, `listDocupass`, `getDocupass`, `deleteDocupass`
+- **ProfileAPI** — KYC profile create/list/get/update/delete/export
+- **Webhook** — `listWebhook`, `resendWebhook`, `deleteWebhook`
+- **Account** — `getAccount` (`/myaccount`)
+
 ## Scanner
 This category supports all scanning-related functions specifically used to initiate a new identity document scan & ID face verification transaction by uploading based64-encoded images.
 ![Sample ID](https://www.idanalyzer.com/img/sampleid1.jpg)
@@ -190,6 +214,62 @@ except Exception as e:
 
 ```
 
+## AML
+Screen names, businesses and document numbers against global sanctions / PEP / watchlists.
+```python
+from idanalyzer2 import *
+import json
+
+a = AML('CBoQpSfkRcPvUhstucIPfiGNLPVuwB23')
+a.throwApiException(True)
+resp = a.search(name="John Smith", country="US")
+print(json.dumps(resp, indent=4))
+# AML v3 full-text search
+respV3 = a.searchV3(text="John Smith", limit=10, page=1)
+print(json.dumps(respV3, indent=4))
+```
+
+## KYC Profiles (ProfileAPI)
+Create and manage server-side KYC profiles.
+```python
+from idanalyzer2 import *
+
+p = ProfileAPI('CBoQpSfkRcPvUhstucIPfiGNLPVuwB23')
+p.throwApiException(True)
+
+cfg = Profile(Profile.SECURITY_MEDIUM)
+cfg.decisionTrigger(1, 1)
+created = p.createProfile("My Onboarding Profile", cfg)
+profileId = created['profileId']
+p.updateProfile(profileId, "My Onboarding Profile (v2)", cfg)
+p.getProfile(profileId)
+p.listProfile()
+p.exportProfile(profileId)
+p.deleteProfile(profileId)
+```
+
+## Webhook
+List, resend and delete webhook delivery logs.
+```python
+from idanalyzer2 import *
+
+w = Webhook('CBoQpSfkRcPvUhstucIPfiGNLPVuwB23')
+w.throwApiException(True)
+logs = w.listWebhook(limit=20)
+# w.resendWebhook("<webhookId>")
+# w.deleteWebhook("<webhookId>")
+```
+
+## Account
+Retrieve account quota and usage.
+```python
+from idanalyzer2 import *
+
+acc = Account('CBoQpSfkRcPvUhstucIPfiGNLPVuwB23')
+acc.throwApiException(True)
+print(acc.getAccount())
+```
+
 ## Api Document
 [ID Analyzer Document](https://id-analyzer-v2.readme.io/docs/python)
 
@@ -197,4 +277,4 @@ except Exception as e:
 Check out **/demo** folder for more Python demos.
 
 ## SDK Reference
-Check out [ID Analyzer Python Reference](https://idanalyzer.github.io/id-analyzer-nodejs/)
+Check out [ID Analyzer Python Reference](https://idanalyzer.github.io/id-analyzer-v2-python/)
