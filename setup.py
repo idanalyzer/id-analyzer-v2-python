@@ -1,6 +1,6 @@
 from setuptools import setup, find_packages
 
-VERSION = '1.1.1'
+VERSION = '1.1.2'
 DESCRIPTION = 'ID Analyzer API V2 client library, scan and verify global passport, driver license and identification card.'
 
 
@@ -20,6 +20,9 @@ setup(
     long_description=LONG_DESCRIPTION,
     long_description_content_type='text/markdown',
     packages=find_packages(),
+    package_data={"idanalyzer2": ["py.typed"]},
+    include_package_data=True,
+    zip_safe=False,
     python_requires='>=3.8',
     install_requires=['requests>=2.20.0', 'validators>=0.18.0'],
     keywords=['id card', 'driver license', 'passport', 'id verification', 'identification card', 'identity document', 'mrz', 'pdf417', 'aamva', "aml", "pep", "sign document"],
