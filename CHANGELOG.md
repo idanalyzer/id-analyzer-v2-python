@@ -5,7 +5,7 @@
 Full API v2 surface parity + base URL fix.
 
 ### Fixed
-- **Base URL now defaults to the load-balanced `https://api2.idanalyzer.com`**
+- **Base URL now defaults to the `https://api2.idanalyzer.com`**
   instead of the single node `https://v2-us1.idanalyzer.com` (no HA). EU is
   unchanged (`https://api2-eu.idanalyzer.com` via `IDANALYZER_REGION=eu`).
 - An unrecognized `IDANALYZER_REGION` now raises `InvalidArgumentException`
