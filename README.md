@@ -1,280 +1,101 @@
+# ID Analyzer Python SDK — Identity Verification, KYC, Document & Biometric API
 
-# ID Analyzer Python SDK
-This is a python SDK library for [ID Analyzer Identity Verification APIs](https://www.idanalyzer.com), though all the APIs can be called with without the SDK using simple HTTP requests as outlined in the [documentation](https://developer.idanalyzer.com/help), you can use this SDK to accelerate server-side development.
+[![PyPI version](https://img.shields.io/pypi/v/idanalyzer2.svg)](https://pypi.org/project/idanalyzer2/)
+[![Python versions](https://img.shields.io/pypi/pyversions/idanalyzer2.svg)](https://pypi.org/project/idanalyzer2/)
+[![license](https://img.shields.io/pypi/l/idanalyzer2.svg)](LICENSE)
 
-We strongly discourage users to connect to ID Analyzer API endpoint directly from client-side applications that will be distributed to end user, such as mobile app, or in-browser JavaScript. Your API key could be easily compromised, and if you are storing your customer's information inside Vault they could use your API key to fetch all your user details. Therefore, the best practice is always to implement a client side connection to your server, and call our APIs from the server-side.
+Official Python client library for the **[ID Analyzer](https://www.idanalyzer.com) API v2** — automate identity document verification, KYC onboarding and biometric checks in minutes.
+
+Scan and authenticate **passports, driver's licenses, ID cards, visas and residence permits from 190+ countries**, run **1:1 face match and liveness detection**, screen against **AML / PEP / sanctions** watchlists, and onboard users remotely with **DocuPass** hosted verification & e-signature.
+
+- 🌐 **Website:** [www.idanalyzer.com](https://www.idanalyzer.com)
+- 📚 **Developer docs & API reference:** [developer.idanalyzer.com](https://developer.idanalyzer.com/help)
+- 🔑 **Get your API key:** [portal2.idanalyzer.com](https://portal2.idanalyzer.com)
+- 💬 **Support:** support@idanalyzer.com
+
+## Features
+
+- **Document OCR & authentication** — passport, driver's license, ID card, visa & residence-permit recognition from 190+ countries, including MRZ and PDF417 / AAMVA barcode parsing.
+- **Biometric verification** — 1:1 face match and liveness / presentation-attack detection.
+- **AML screening** — PEP, sanctions, watchlist and adverse-media checks.
+- **DocuPass** — hosted, no-code remote identity verification, KYC/AML onboarding and legally-binding e-signature.
+- **KYC profiles, transaction vault, contract generation and webhooks.**
+- **US & EU data-residency regions.**
+
+> ⚠️ Never embed your API key in client-side apps (mobile, browser JS). Call the API from your server.
 
 ## Installation
-Install through PIP
 
-```shell
+```bash
 pip install idanalyzer2
 ```
 
-## Base URL / Region
-By default the SDK targets the US fleet (`https://api2.idanalyzer.com`). To use the
-EU fleet (`https://api2-eu.idanalyzer.com`), set the `IDANALYZER_REGION` environment
-variable to `eu` before instantiating any client:
+Requires Python 3.8+. The `requests` and `validators` dependencies install automatically.
 
-```shell
-export IDANALYZER_REGION=eu   # "us" (default) or "eu"
-```
+## Authentication & region
 
-An unrecognized region value raises `InvalidArgumentException`.
+Pass your API key to each client, or set the `IDANALYZER_KEY` environment variable. The SDK targets the load-balanced US fleet (`https://api2.idanalyzer.com`) by default; set `IDANALYZER_REGION=eu` for the EU fleet (`https://api2-eu.idanalyzer.com`). An unrecognized region raises `InvalidArgumentException`.
 
-## API Coverage
-The SDK exposes the full ID Analyzer API v2 surface:
+## Quick start
 
-- **Scanner** — `scan`, `quickScan`, `veryQuickScan`
-- **Biometric** — `verifyFace`, `verifyLiveness`
-- **AML** — `search` (`/aml`), `searchV3` (`/amlv3`)
-- **Contract** — `generate` + template CRUD
-- **Transaction** — get/list/update/delete, export, `saveImage`/`saveFile`
-- **Docupass** — `createDocupass`, `listDocupass`, `getDocupass`, `deleteDocupass`
-- **ProfileAPI** — KYC profile create/list/get/update/delete/export
-- **Webhook** — `listWebhook`, `resendWebhook`, `deleteWebhook`
-- **Account** — `getAccount` (`/myaccount`)
-
-## Scanner
-This category supports all scanning-related functions specifically used to initiate a new identity document scan & ID face verification transaction by uploading based64-encoded images.
-![Sample ID](https://www.idanalyzer.com/img/sampleid1.jpg)
-```python
-from idanalyzer2 import *
-import traceback
-import json
-
-
-try:
-    profile = Profile(Profile.SECURITY_MEDIUM)
-    s = Scanner('CBoQpSfkRcPvUhstucIPfiGNLPVuwB23')
-    s.throwApiException(True)
-    resp = s.quickScan('05.png', "", True)
-    with open('quickScan.json', 'w') as f:
-        f.write(json.dumps(resp, indent=4))
-    s.setProfile(profile)
-    resp = s.scan("05.png")
-    with open('scan.json', 'w') as f:
-        f.write(json.dumps(resp, indent=4))
-except APIError as e:
-    print(traceback.format_exc())
-    print(e.args[0])
-except InvalidArgumentException as e:
-    print(traceback.format_exc())
-    print(e.args[0])
-except Exception as e:
-    print(traceback.format_exc())
-    print(e.args[0])
-
-
-```
-
-## Biometric
-There are two primary functions within this class. The first one is verifyFace and the second is verifyLiveness.
-```python
-from idanalyzer2 import *
-import traceback
-import json
-
-try:
-    profile = Profile(Profile.SECURITY_MEDIUM)
-    b = Biometric('CBoQpSfkRcPvUhstucIPfiGNLPVuwB23')
-    b.throwApiException(True)
-    b.setProfile(profile)
-    resp = b.verifyFace('05.png', '05.png')
-    with open('verifyFace.json', 'w') as f:
-        f.write(json.dumps(resp, indent=4))
-    resp = b.verifyLiveness('05.png', '05.png')
-    with open('verifyLiveness.json', 'w') as f:
-        f.write(json.dumps(resp, indent=4))
-except APIError as e:
-    print(traceback.format_exc())
-    print(e.args[0])
-except InvalidArgumentException as e:
-    print(traceback.format_exc())
-    print(e.args[0])
-except Exception as e:
-    print(traceback.format_exc())
-    print(e.args[0])
-```
-
-## Contract
-All contract-related feature sets are available in Contract class. There are three primary functions in this class.
-```python
-from idanalyzer2 import *
-import traceback
-import json
-
-try:
-    c = Contract('CBoQpSfkRcPvUhstucIPfiGNLPVuwB23')
-    c.throwApiException(True)
-    temp = c.createTemplate("tempName", "<p>%{fullName}</p>")
-    with open('createTemplate.json', 'w') as f:
-        f.write(json.dumps(temp, indent=4))
-    tempId = temp['templateId']
-    resp = c.updateTemplate(tempId, "oldTemp", "<p>%{fullName}</p><p>Hello!!</p>")
-    with open('updateTemplate.json', 'w') as f:
-        f.write(json.dumps(resp, indent=4))
-    resp = c.getTemplate(tempId)
-    with open('getTemplate.json', 'w') as f:
-        f.write(json.dumps(resp, indent=4))
-    resp = c.listTemplate()
-    with open('listTemplate.json', 'w') as f:
-        f.write(json.dumps(resp, indent=4))
-    resp = c.generate(tempId, "PDF", "", {
-        'fullName': "Tian",
-    })
-    with open('generate.json', 'w') as f:
-        f.write(json.dumps(resp, indent=4))
-    resp = c.deleteTemplate(tempId)
-    with open('deleteTemplate.json', 'w') as f:
-        f.write(json.dumps(resp, indent=4))
-except APIError as e:
-    print(traceback.format_exc())
-    print(e.args[0])
-except InvalidArgumentException as e:
-    print(traceback.format_exc())
-    print(e.args[0])
-except Exception as e:
-    print(traceback.format_exc())
-    print(e.args[0])
-
-```
-
-## Docupass
-This category supports all rapid user verification based on the ids and the face images provided.
-![DocuPass Screen](https://www.idanalyzer.com/_next/image?url=%2F_next%2Fstatic%2Fmedia%2Fdocupass-hero.0~_7a8exuldcn.webp&w=1080&q=75)
-```python
-from idanalyzer2 import *
-import traceback
-import json
-
-try:
-    d = Docupass('CBoQpSfkRcPvUhstucIPfiGNLPVuwB23')
-    d.throwApiException(True)
-    doc = d.createDocupass("bbd8436953ef426e98d078953f258835")
-    with open('createDocupass.json', 'w') as outfile:
-        json.dump(doc, outfile)
-    resp = d.listDocupass()
-    with open('listDocupass.json', 'w') as outfile:
-        json.dump(resp, outfile)
-    resp = d.deleteDocupass(doc['reference'])
-    with open('deleteDocupass.json', 'w') as outfile:
-        json.dump(resp, outfile)
-except APIError as e:
-    print(traceback.format_exc())
-    print(e.args[0])
-except InvalidArgumentException as e:
-    print(traceback.format_exc())
-    print(e.args[0])
-except Exception as e:
-    print(traceback.format_exc())
-    print(e.args[0])
-
-```
-
-## Transaction
-This function enables the developer to retrieve a single transaction record based on the provided transactionId.
-```python
-from idanalyzer2 import *
-import traceback
-import json
-
-try:
-    t = Transaction('CBoQpSfkRcPvUhstucIPfiGNLPVuwB23')
-    t.throwApiException(True)
-    tid = "da3124d09173474cabc86f3a648c9084"
-    resp = t.getTransaction(tid)
-    with open('getTransaction.json', 'w') as f:
-        f.write(json.dumps(resp, indent=4))
-    resp = t.listTransaction()
-    with open('listTransaction.json', 'w') as f:
-        f.write(json.dumps(resp, indent=4))
-    resp = t.updateTransaction(tid, "review")
-    with open('updateTransaction.json', 'w') as f:
-        f.write(json.dumps(resp, indent=4))
-    resp = t.deleteTransaction(tid)
-    with open('deleteTransaction.json', 'w') as f:
-        f.write(json.dumps(resp, indent=4))
-
-    t.saveImage("fb2079b309c116b025408b2b79f90b9c196b02a27827ba98ea1ddc2af63f111c", "test.jpg")
-    t.saveFile("testsign_3smMjY66x4y7CVPNrbBRGyKoePrlW8oi.pdf", "test.pdf")
-    t.exportTransaction("./test.zip", [
-        "305e9fcb7b7a48dbab7c87d3a752b5e1",
-    ], "json")
-
-except APIError as e:
-    print(traceback.format_exc())
-    print(e.args[0])
-except InvalidArgumentException as e:
-    print(traceback.format_exc())
-    print(e.args[0])
-except Exception as e:
-    print(traceback.format_exc())
-    print(e.args[0])
-
-```
-
-## AML
-Screen names, businesses and document numbers against global sanctions / PEP / watchlists.
-```python
-from idanalyzer2 import *
-import json
-
-a = AML('CBoQpSfkRcPvUhstucIPfiGNLPVuwB23')
-a.throwApiException(True)
-resp = a.search(name="John Smith", country="US")
-print(json.dumps(resp, indent=4))
-# AML v3 full-text search
-respV3 = a.searchV3(text="John Smith", limit=10, page=1)
-print(json.dumps(respV3, indent=4))
-```
-
-## KYC Profiles (ProfileAPI)
-Create and manage server-side KYC profiles.
 ```python
 from idanalyzer2 import *
 
-p = ProfileAPI('CBoQpSfkRcPvUhstucIPfiGNLPVuwB23')
-p.throwApiException(True)
+scanner = Scanner("YOUR_API_KEY")
+scanner.throwApiException(True)
+scanner.setProfile(Profile(Profile.SECURITY_MEDIUM))
 
-cfg = Profile(Profile.SECURITY_MEDIUM)
-cfg.decisionTrigger(1, 1)
-created = p.createProfile("My Onboarding Profile", cfg)
-profileId = created['profileId']
-p.updateProfile(profileId, "My Onboarding Profile (v2)", cfg)
-p.getProfile(profileId)
-p.listProfile()
-p.exportProfile(profileId)
-p.deleteProfile(profileId)
+# Scan a document + selfie for biometric verification
+result = scanner.scan("id_front.jpg", "", "selfie.jpg")
+print(result["decision"])   # accept / review / reject
 ```
 
-## Webhook
-List, resend and delete webhook delivery logs.
+## Examples
+
 ```python
 from idanalyzer2 import *
 
-w = Webhook('CBoQpSfkRcPvUhstucIPfiGNLPVuwB23')
-w.throwApiException(True)
-logs = w.listWebhook(limit=20)
-# w.resendWebhook("<webhookId>")
-# w.deleteWebhook("<webhookId>")
+# AML / PEP / sanctions screening
+aml = AML("YOUR_API_KEY")
+aml.search(name="John Smith", country="US")          # POST /aml
+aml.searchV3(text="John Smith", limit=10, page=1)    # POST /amlv3
+
+# DocuPass — hosted remote verification link
+docupass = Docupass("YOUR_API_KEY")
+link = docupass.createDocupass("YOUR_PROFILE_ID")
+print(link["url"])
 ```
 
-## Account
-Retrieve account quota and usage.
-```python
-from idanalyzer2 import *
+More demos in the [`/demo`](demo) folder.
 
-acc = Account('CBoQpSfkRcPvUhstucIPfiGNLPVuwB23')
-acc.throwApiException(True)
-print(acc.getAccount())
-```
+## API coverage
 
-## Api Document
-[ID Analyzer Document](https://developer.idanalyzer.com/help)
+The SDK wraps the complete ID Analyzer API v2 surface:
 
-## Demo
-Check out **/demo** folder for more Python demos.
+| Class | Methods |
+|---|---|
+| `Scanner` | `scan`, `quickScan`, `veryQuickScan` |
+| `Biometric` | `verifyFace`, `verifyLiveness` |
+| `AML` | `search` (`/aml`), `searchV3` (`/amlv3`) |
+| `Contract` | `generate` + template CRUD |
+| `Transaction` | `getTransaction`, `listTransaction`, `updateTransaction`, `deleteTransaction`, `exportTransaction`, `saveImage`, `saveFile` |
+| `Docupass` | `createDocupass`, `listDocupass`, `getDocupass`, `deleteDocupass` |
+| `ProfileAPI` | KYC profile create / list / get / update / delete / export |
+| `Webhook` | `listWebhook`, `resendWebhook`, `deleteWebhook` |
+| `Account` | `getAccount` |
+| `Profile` | client-side KYC profile-override builder |
 
-## SDK Reference
-Check out [ID Analyzer Python Reference](https://developer.idanalyzer.com/help/python)
+## Resources
+
+- [ID Analyzer website](https://www.idanalyzer.com)
+- [Developer documentation & API reference](https://developer.idanalyzer.com/help)
+- [Python SDK guide](https://developer.idanalyzer.com/help/python)
+- [Dashboard — get your API key](https://portal2.idanalyzer.com)
+
+## Other ID Analyzer SDKs
+
+[PHP](https://github.com/idanalyzer/id-analyzer-v2-php) · [Python](https://github.com/idanalyzer/id-analyzer-v2-python) · [Node.js](https://github.com/idanalyzer/id-analyzer-v2-nodejs) · [.NET](https://github.com/idanalyzer/id-analyzer-v2-dotnet) · [Java](https://github.com/idanalyzer/id-analyzer-v2-java) · [Go](https://github.com/idanalyzer/id-analyzer-v2-go)
+
+## License
+
+MIT © [ID Analyzer](https://www.idanalyzer.com) — see [LICENSE](LICENSE).
